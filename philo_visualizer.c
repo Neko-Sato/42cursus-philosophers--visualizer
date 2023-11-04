@@ -1,11 +1,9 @@
 #include "philo_visualizer.h"
-#include <arpa/inet.h>
-#include <netinet/in.h>
 #include <stdlib.h>
+#include <string.h>
 #include <sys/socket.h>
+#include <sys/un.h>
 #include <unistd.h>
-
-#ifdef PHILO_VISUAL
 
 static int	sock = -1;
 
@@ -13,17 +11,17 @@ static void	philovisualizer_final(void);
 
 void	philovisualizer_init(void)
 {
-	struct sockaddr_in	addr;
+	struct sockaddr_un	addr;
 
-	sock = socket(AF_INET, SOCK_STREAM, 0);
+	sock = socket(AF_LOCAL, SOCK_STREAM, 0);
 	if (sock < 0)
 		return ;
-	addr.sin_family = AF_INET;
-	addr.sin_port = htons(PORT);
-	addr.sin_addr.s_addr = inet_addr(ADDRESS);
+	addr.sun_family = AF_LOCAL;
+	strcpy(addr.sun_path, PV_PATH);
 	if (connect(sock, (struct sockaddr *)&addr, sizeof(addr)))
 		return (philovisualizer_final());
 	atexit(philovisualizer_final);
+	philovisualizer_send(0, PV_RESET);
 }
 
 static void	philovisualizer_final(void)
@@ -44,15 +42,3 @@ void	philovisualizer_send(unsigned int philo, pv_code code)
 	data.var.code = code;
 	send(sock, data.data, sizeof(data), 0);
 }
-
-#else
-
-void	philovisualizer_init(void)
-{
-}
-
-void	philovisualizer_send(unsigned int philo, pv_code code)
-{
-}
-
-#endif

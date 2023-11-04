@@ -58,35 +58,46 @@ class PhiloVisualizer(AsyncTk):
 			self.width, self.height, 0.9 if istake else 0.8, fork_pos/self.len)
 		self.canvas.coords(self.fork[fork], x, y)
 		self.canvas.itemconfig(self.fork[fork],angle=angle)
+	def reset(self):
+		for i in range(self.len):
+			self.change_philostate(i, PhiloState.THINKING)
+			self.change_forkstate(i, False, 1)
+			self.change_forkstate(i, False, -1)
 	async def start(self, reader:asyncio.StreamReader):
 		while self.running:
 			data = await reader.read(8)
 			if len(data) < 8:
 				break
 			philo, action = struct.unpack("II", data)
+			if action == 0b1000:
+				self.reset()
+				continue
 			philo -= 1
-			if action == 0b000:
+			if action == 0b0000:
 				self.change_philostate(philo, PhiloState.THINKING)
-			elif action == 0b001:
+			elif action == 0b0001:
 				self.change_philostate(philo, PhiloState.EATING)
-			elif action == 0b010:
+			elif action == 0b0010:
 				self.change_philostate(philo, PhiloState.SLEEPING)
-			elif action == 0b011:
+			elif action == 0b0011:
 				self.change_philostate(philo, PhiloState.DIED)
-			elif action == 0b100:
+			elif action == 0b0100:
 				self.change_forkstate(philo, True, 1)
-			elif action == 0b101:
+			elif action == 0b0101:
 				self.change_forkstate(philo, False, 1)
-			elif action == 0b110:
+			elif action == 0b0110:
 				self.change_forkstate(philo, True, -1)
-			elif action == 0b111:
+			elif action == 0b0111:
 				self.change_forkstate(philo, False, -1)
 
-async def main(host="localhost", port=4242):
+async def main():
 	app = PhiloVisualizer(int(sys.argv[1]))
-	async def handler(writer, reader):
-		await app.start(writer)
-	server = await asyncio.start_server(handler, host, port, backlog=1)
+	async def handler(reader, writer):
+		await app.start(reader)
+	server = await asyncio.start_unix_server(
+		handler, 
+		"/tmp/philo_visualizer.sock", 
+		backlog=1)
 	await app.async_mainloop()
 	server.close()
 	await server.wait_closed()
