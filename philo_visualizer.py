@@ -64,6 +64,7 @@ class PhiloVisualizer(AsyncTk):
 			self.change_forkstate(i, False, 1)
 			self.change_forkstate(i, False, -1)
 	async def start(self, reader:asyncio.StreamReader):
+		self.reset()
 		while self.running:
 			data = await reader.read(8)
 			if len(data) < 8:

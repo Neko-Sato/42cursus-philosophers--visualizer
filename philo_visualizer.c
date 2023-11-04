@@ -21,7 +21,6 @@ void	philovisualizer_init(void)
 	if (connect(sock, (struct sockaddr *)&addr, sizeof(addr)))
 		return (philovisualizer_final());
 	atexit(philovisualizer_final);
-	philovisualizer_send(0, PV_RESET);
 }
 
 static void	philovisualizer_final(void)
