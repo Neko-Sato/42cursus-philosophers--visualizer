@@ -1,6 +1,5 @@
 #!/usr/bin/python3
 import asyncio
-import sys
 import tkinter as tk
 from async_tkinter import *
 import math
@@ -22,16 +21,22 @@ class PhiloState(Enum):
 class PhiloVisualizer(AsyncTk):
 	width, height = 500, 500
 	font = (None, 18)
-	def __init__(self, len):
+	def __init__(self):
 		super().__init__()
 		self.title("PhiloVisualizer")
 		self.geometry(f"{self.width}x{self.height}")
-		self.len = len
+		self.len = 0
+		self.philo = []
+		self.fork = []
 		self.build()
 	def build(self):
 		self.canvas = tk.Canvas(self, width=self.width, height=self.height)
-		self.philo = []
-		self.fork = []
+		self.canvas.pack()
+	def init(self, len:int):
+		self.canvas.delete("all")
+		self.philo.clear()
+		self.fork.clear()
+		self.len = len
 		for i in range(self.len):
 			x, y, angle = calc_pos_and_angle(self.width, self.height, 0.95, i/self.len)
 			item = self.canvas.create_text(x, y, text="●", angle=angle, font=self.font)
@@ -40,7 +45,6 @@ class PhiloVisualizer(AsyncTk):
 			x, y, angle = calc_pos_and_angle(self.width, self.height, 0.8, (i+0.5)/self.len)
 			item = self.canvas.create_text(x, y, text="|", angle=angle, font=self.font)
 			self.fork.append(item)
-		self.canvas.pack()
 	def change_philostate(self, philo:int, state:PhiloState):
 		color = {
 			PhiloState.THINKING: "black",
@@ -58,20 +62,14 @@ class PhiloVisualizer(AsyncTk):
 			self.width, self.height, 0.9 if istake else 0.8, fork_pos/self.len)
 		self.canvas.coords(self.fork[fork], x, y)
 		self.canvas.itemconfig(self.fork[fork],angle=angle)
-	def reset(self):
-		for i in range(self.len):
-			self.change_philostate(i, PhiloState.THINKING)
-			self.change_forkstate(i, False, 1)
-			self.change_forkstate(i, False, -1)
 	async def start(self, reader:asyncio.StreamReader):
-		self.reset()
 		while self.running:
 			data = await reader.read(8)
 			if len(data) < 8:
 				break
 			philo, action = struct.unpack("II", data)
-			if action == 0b1000:
-				self.reset()
+			if philo == 0:
+				self.init(action)
 				continue
 			philo -= 1
 			if action == 0b0000:
@@ -92,7 +90,7 @@ class PhiloVisualizer(AsyncTk):
 				self.change_forkstate(philo, False, -1)
 
 async def main():
-	app = PhiloVisualizer(int(sys.argv[1]))
+	app = PhiloVisualizer()
 	async def handler(reader, writer):
 		await app.start(reader)
 	server = await asyncio.start_unix_server(

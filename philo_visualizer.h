@@ -28,7 +28,7 @@ typedef enum
 	PVB_PUT			= 0b101u,
 }	pv_code;
 
-void	philovisualizer_init(void);
+void	philovisualizer_init(unsigned int len);
 
 void	philovisualizer_send(unsigned int philo, pv_code code);
 
