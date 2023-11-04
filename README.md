@@ -1,1 +1,1 @@
-# philo_visualizer
+# 42cursus-philosophers--visualizer
