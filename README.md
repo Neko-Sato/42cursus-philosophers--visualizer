@@ -26,3 +26,5 @@ philovisualizer_send([哲学者の番号], [上のいずれか])
 ./philo_visualizer.py &
 ./philo ...
 ```
+
+thnkingが黒、eating,が緑、sleepingが青、deiedが赤で表示されます
