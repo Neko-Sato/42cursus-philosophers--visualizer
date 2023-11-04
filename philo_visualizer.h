@@ -35,7 +35,6 @@ typedef enum
 }	pv_code;
 
 void	philovisualizer_init(void);
-void	philovisualizer_final(void);
 
 void	philovisualizer_send(unsigned int philo, pv_code code);
 

@@ -1,10 +1,13 @@
 #include "philo_visualizer.h"
 #include <unistd.h>
+#include <stdlib.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
 
 static int sock = -1;
+
+static void philovisualizer_final(void);
 
 void philovisualizer_init(void)
 {
@@ -18,10 +21,13 @@ void philovisualizer_init(void)
 	addr.sin_addr.s_addr = inet_addr(ADDRESS);
 	if (connect(sock, (struct sockaddr *)&addr, sizeof(addr)))
 		return philovisualizer_final();
+	atexit(philovisualizer_final);
 }
 
-void philovisualizer_final(void)
+static void philovisualizer_final(void)
 {
+	if (sock < 0)
+		return ;
 	close(sock);
 	sock = -1;
 }
