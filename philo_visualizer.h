@@ -1,5 +1,5 @@
-#ifndef PHILO_VISUAL
-# define PHILO_VISUAL
+#ifndef PHILO_VISUAL_H
+# define PHILO_VISUAL_H
 
 #ifndef ADDRESS
 # define ADDRESS "127.0.0.1"
