@@ -13,6 +13,8 @@ void	philovisualizer_init(unsigned int len)
 {
 	struct sockaddr_un	addr;
 
+	if (0 <= sock)
+		return ;
 	sock = socket(AF_LOCAL, SOCK_STREAM, 0);
 	if (sock < 0)
 		return ;
