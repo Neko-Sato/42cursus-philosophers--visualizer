@@ -1,10 +1,13 @@
 #!/usr/bin/python3
 import asyncio
+import os
 import tkinter as tk
 from async_tkinter import *
 import math
 from enum import Enum
 import struct
+
+PATH = "/tmp/philo_visualizer.sock"
 
 def calc_pos_and_angle(width, height, n, p):
 	x = width/2*(1+n*math.sin(2*math.pi*p))
@@ -95,11 +98,16 @@ async def main():
 		await app.start(reader)
 	server = await asyncio.start_unix_server(
 		handler, 
-		"/tmp/philo_visualizer.sock", 
+		PATH, 
 		backlog=1)
 	await app.async_mainloop()
 	server.close()
 	await server.wait_closed()
+	os.remove(PATH)
 
 if __name__ == "__main__":
+	try:
+		os.remove(PATH)
+	except:
+		pass
 	asyncio.run(main())
