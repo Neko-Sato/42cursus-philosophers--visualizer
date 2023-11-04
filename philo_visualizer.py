@@ -3,7 +3,6 @@ import asyncio
 import sys
 import tkinter as tk
 from async_tkinter import *
-from async_stdinbuffer import *
 import math
 from enum import Enum
 import struct
@@ -59,10 +58,11 @@ class PhiloVisualizer(AsyncTk):
 			self.width, self.height, 0.9 if istake else 0.8, fork_pos/self.len)
 		self.canvas.coords(self.fork[fork], x, y)
 		self.canvas.itemconfig(self.fork[fork],angle=angle)
-	async def start(self):
-		stdin = await async_stdinbuffer()
-		while True:
-			data = await stdin.read(8)
+	async def start(self, reader:asyncio.StreamReader):
+		while self.running:
+			data = await reader.read(8)
+			if len(data) < 8:
+				break
 			philo, action = struct.unpack("II", data)
 			philo -= 1
 			if action == 0b000:
@@ -82,15 +82,14 @@ class PhiloVisualizer(AsyncTk):
 			elif action == 0b111:
 				self.change_forkstate(philo, False, -1)
 
-async def main():
+async def main(host="localhost", port=4242):
 	app = PhiloVisualizer(int(sys.argv[1]))
-	task = asyncio.create_task(app.start())
+	async def handler(writer, reader):
+		await app.start(writer)
+	server = await asyncio.start_server(handler, host, port, backlog=1)
 	await app.async_mainloop()
-	task.cancel()
-	try:
-		await task
-	except asyncio.CancelledError:
-		pass
+	server.close()
+	await server.wait_closed()
 
 if __name__ == "__main__":
 	asyncio.run(main())
