@@ -71,8 +71,8 @@ class PhiloVisualizer(AsyncTk):
 			if len(data) < 8:
 				break
 			philo, action = struct.unpack("II", data)
-			if philo == 0:
-				self.init(action)
+			if action & 0b1000:
+				self.init(philo)
 				continue
 			philo -= 1
 			if action == 0b0000:

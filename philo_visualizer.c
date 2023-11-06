@@ -9,7 +9,7 @@ static int	sock = -1;
 
 static void	philovisualizer_final(void);
 
-void	philovisualizer_init(unsigned int len)
+void	philovisualizer_init(unsigned int len, int isbouns)
 {
 	struct sockaddr_un	addr;
 
@@ -23,7 +23,10 @@ void	philovisualizer_init(unsigned int len)
 	if (connect(sock, (struct sockaddr *)&addr, sizeof(addr)))
 		return (philovisualizer_final());
 	atexit(philovisualizer_final);
-	philovisualizer_send(0, len);
+	if (isbouns)
+		philovisualizer_send(len, PVB_INIT);
+	else 
+		philovisualizer_send(len, PV_INIT);
 }
 
 static void	philovisualizer_final(void)

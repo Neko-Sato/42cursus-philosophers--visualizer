@@ -16,19 +16,21 @@ typedef union
 
 typedef enum
 {
-	PV_THINKING		= 0b000u,
-	PV_EATING		= 0b001u,
-	PV_SLEEPING		= 0b010u,
-	PV_DIED			= 0b011u,
-	PV_TAKE_LEFT	= 0b100u,
-	PV_PUT_LEFT		= 0b101u,
-	PV_TAKE_RIGHT	= 0b110u,
-	PV_PUT_RIGHT	= 0b111u,
-	PVB_TAKE		= 0b100u,
-	PVB_PUT			= 0b101u,
+	PV_INIT			= 0b1000u,
+	PV_THINKING		= 0b0000u,
+	PV_EATING		= 0b0001u,
+	PV_SLEEPING		= 0b0010u,
+	PV_DIED			= 0b0011u,
+	PV_TAKE_LEFT	= 0b0100u,
+	PV_PUT_LEFT		= 0b0101u,
+	PV_TAKE_RIGHT	= 0b0110u,
+	PV_PUT_RIGHT	= 0b0111u,
+	PVB_INIT		= 0b1001u,
+	PVB_TAKE		= 0b0100u,
+	PVB_PUT			= 0b0101u,
 }	pv_code;
 
-void	philovisualizer_init(unsigned int len);
+void	philovisualizer_init(unsigned int len, int isbouns);
 
 void	philovisualizer_send(unsigned int philo, pv_code code);
 
