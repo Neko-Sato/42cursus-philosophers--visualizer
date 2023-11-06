@@ -19,6 +19,9 @@ philovisualizer_init([哲学者とフォークの数], [ボーナスかどうか
 //	PV_TAKE_RIGHT
 //	PV_PUT_RIGHT
 
+//	PVB_TAKE
+//	PVB_PUT
+
 philovisualizer_send([哲学者の番号], [上のいずれか])
 ```
 
