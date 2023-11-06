@@ -5,6 +5,11 @@ IDFLAGS	= -I.
 $(NAME): $(SORCS)
 	$(CC) $(IDFLAGS) -shared -fPIC -o $@ $^
 
-.PHONY: clean
+.PHONY: all clean re
+
+all: $(NAME)
+
 clean: 
 	$(RM) $(NAME)
+
+re: clean all
