@@ -22,11 +22,11 @@ class PhiloState(Enum):
 	DIED = -1
 
 class PhiloVisualizer(AsyncTk):
-	width, height = 500, 500
 	font = (None, 18)
-	def __init__(self):
+	def __init__(self, width=500, height=500):
 		super().__init__()
 		self.title("PhiloVisualizer")
+		self.width, self.height = width, height
 		self.geometry(f"{self.width}x{self.height}")
 		self.len = 0
 		self.philo = []
@@ -91,6 +91,7 @@ class PhiloVisualizer(AsyncTk):
 				self.change_forkstate(philo, True, -1)
 			elif action == 0b0111:
 				self.change_forkstate(philo, False, -1)
+			# await asyncio.sleep(0.01)
 
 async def main():
 	app = PhiloVisualizer()
