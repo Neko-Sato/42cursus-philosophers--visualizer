@@ -7,8 +7,9 @@
 ## 使い方
 シミュレーションを開始する前にこの関数を呼びます
 ```
-philovisualizer_init([哲学者とフォークの数]);
+philovisualizer_init([哲学者とフォークの数], [ボーナスかどうか]);
 ```
+※ボーナスは現在非対応です
 
 哲学者の状態が変化する度にこの関数を呼びます
 ```
@@ -20,6 +21,9 @@ philovisualizer_init([哲学者とフォークの数]);
 //	PV_PUT_LEFT
 //	PV_TAKE_RIGHT
 //	PV_PUT_RIGHT
+
+//	PVB_TAKE
+//	PVB_PUT
 
 philovisualizer_send([哲学者の番号], [上のいずれか])
 ```
