@@ -6,5 +6,5 @@ $(NAME): $(SORCS)
 	$(CC) $(IDFLAGS) -shared -fPIC -o $@ $^
 
 .PHONY: clean
-clean: $(NAME)
-	$(RM) $^
+clean: 
+	$(RM) $(NAME)
