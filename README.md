@@ -1,6 +1,6 @@
 # 42cursus-philosophers--visualizer
 
-<img src="image.png" width="250" alt="スクリーンショット">
+<img src="image.png" width="500" alt="スクリーンショット">
 
 このビジュアライザーはおそらく課題には役に立ちませんが哲学者たちの動きを見て楽しむために製作しました
 
