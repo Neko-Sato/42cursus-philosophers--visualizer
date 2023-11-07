@@ -115,8 +115,6 @@ async def main(path):
 	await task_app
 	task.cancel()
 	await task
-	if os.path.exists(path):
-		os.unlink(path)
 
 if __name__ == "__main__":
 	asyncio.run(main(PATH))
