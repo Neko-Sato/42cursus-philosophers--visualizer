@@ -14,6 +14,9 @@ class AsyncTk(tk.Tk):
 		return super().destroy()
 	async def async_mainloop(self):
 		self.__running = True
-		while self.running:
-			self.update()
-			await asyncio.sleep(0)
+		try:
+			while self.running:
+				self.update()
+				await asyncio.sleep(0)
+		except asyncio.CancelledError:
+			self.destroy()

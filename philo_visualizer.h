@@ -1,7 +1,7 @@
 #ifndef PHILO_VISUAL_H
 # define PHILO_VISUAL_H
 
-#define PV_PATH "/tmp/philo_visualizer.sock"
+#define PV_PATH "/tmp/philo_visualizer.pipe"
 
 typedef union
 {

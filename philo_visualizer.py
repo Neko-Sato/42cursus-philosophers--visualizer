@@ -2,12 +2,12 @@
 import asyncio
 import os
 import tkinter as tk
-from async_tkinter import *
+import async_tkinter as atk
 import math
 from enum import Enum
 import struct
 
-PATH = "/tmp/philo_visualizer.sock"
+PATH = "/tmp/philo_visualizer.pipe"
 
 def calc_pos_and_angle(width, height, n, p):
 	x = width/2*(1+n*math.sin(2*math.pi*p))
@@ -21,7 +21,7 @@ class PhiloState(Enum):
 	SLEEPING = 2
 	DIED = -1
 
-class PhiloVisualizer(AsyncTk):
+class PhiloVisualizer(atk.AsyncTk):
 	font = (None, 18)
 	def __init__(self, width=500, height=500):
 		super().__init__()
@@ -67,8 +67,9 @@ class PhiloVisualizer(AsyncTk):
 		self.canvas.itemconfig(self.fork[fork],angle=angle)
 	async def start(self, reader:asyncio.StreamReader):
 		while self.running:
-			data = await reader.read(8)
-			if len(data) < 8:
+			try:
+				data = await reader.readexactly(8)
+			except asyncio.IncompleteReadError:
 				break
 			philo, action = struct.unpack("II", data)
 			if action & 0b1000:
@@ -93,22 +94,31 @@ class PhiloVisualizer(AsyncTk):
 				self.change_forkstate(philo, False, -1)
 			# await asyncio.sleep(0.01)
 
-async def main():
+async def main(path):
+	if os.path.exists(path):
+		os.unlink(path)
+	os.mkfifo(path)
 	app = PhiloVisualizer()
-	async def handler(reader, writer):
-		await app.start(reader)
-	server = await asyncio.start_unix_server(
-		handler, 
-		PATH, 
-		backlog=1)
-	await app.async_mainloop()
-	server.close()
-	await server.wait_closed()
-	os.remove(PATH)
+	task_app = asyncio.create_task(app.async_mainloop())
+	async def recive():
+		loop = asyncio.get_running_loop()
+		try:
+			while True:
+				with await loop.run_in_executor(None, lambda: open(path, mode="rb", buffering=0)) as fd:
+					reader = asyncio.StreamReader()
+					protocol = asyncio.StreamReaderProtocol(reader)
+					await loop.connect_read_pipe(lambda: protocol, fd)
+					await app.start(reader)
+		except asyncio.CancelledError:
+			pass
+	task = asyncio.create_task(recive())
+	await task_app
+	task.cancel()
+	await task
+	if os.path.exists(path):
+		os.unlink(path)
 
 if __name__ == "__main__":
-	try:
-		os.remove(PATH)
-	except:
-		pass
-	asyncio.run(main())
+	asyncio.run(main(PATH))
+	#なぜか終了しないので
+	os._exit(0)
