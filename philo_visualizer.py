@@ -100,7 +100,7 @@ async def main(args:argparse.Namespace):
 		os.mkfifo(args.pipe)
 	app = PhiloVisualizer(width=args.width, height=args.height)
 	loop = asyncio.get_running_loop()
-	await asyncio.create_subprocess_exec(*args.philo_argv)
+	philo = await asyncio.create_subprocess_exec(*args.philo_argv)
 	sync_reader = open(args.pipe, "rb", buffering=0)
 	reader = asyncio.StreamReader()
 	transport, _ = await loop.connect_read_pipe(
@@ -110,6 +110,11 @@ async def main(args:argparse.Namespace):
 	task.cancel()
 	transport.close()
 	sync_reader.close()
+	try:
+		philo.terminate()
+		await philo.wait()
+	except ProcessLookupError:
+		pass
 
 if __name__ == "__main__":
 	parser = argparse.ArgumentParser()
