@@ -113,13 +113,13 @@ class PhiloVisualizer(atk.AsyncTk):
 			elif action == 0b0011:
 				self.change_philostate(philo, PhiloState.DIED)
 			elif action == 0b0100:
-				self.change_forkstate(philo, True, 1)
-			elif action == 0b0101:
-				self.change_forkstate(philo, False, 1)
-			elif action == 0b0110:
 				self.change_forkstate(philo, True, -1)
-			elif action == 0b0111:
+			elif action == 0b0101:
 				self.change_forkstate(philo, False, -1)
+			elif action == 0b0110:
+				self.change_forkstate(philo, True, 1)
+			elif action == 0b0111:
+				self.change_forkstate(philo, False, 1)
 			# await asyncio.sleep(0.01)
 
 async def main(path):
@@ -127,7 +127,7 @@ async def main(path):
 		os.mkfifo(PATH)
 	await asyncio.create_subprocess_exec(*sys.argv[1:])
 	app = PhiloVisualizer()
-	with await async_open(path, "rb") as reader:
+	with await async_open(path, "rb", buffering=0) as reader:
 		task = asyncio.create_task(app.start(reader))
 		await app.async_mainloop()
 		task.cancel()

@@ -1,5 +1,6 @@
 import asyncio
 import tkinter as tk
+from _tkinter import TclError
 
 class AsyncTk(tk.Tk):
 	def __init__(self, *args, **kwds):
@@ -9,14 +10,15 @@ class AsyncTk(tk.Tk):
 	@property
 	def running(self):
 		return self.__running
-	def destroy(self):
-		self.__running = False
-		return super().destroy()
 	async def async_mainloop(self):
-		self.__running = True
 		try:
-			while self.running:
+			self.__running = True
+			while True:
 				self.update()
 				await asyncio.sleep(0)
+		except TclError:
+			pass
 		except asyncio.CancelledError:
-			self.destroy()
+			pass
+		finally:
+			self.__running = False
