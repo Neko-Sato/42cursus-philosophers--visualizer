@@ -1,6 +1,8 @@
 #!/usr/bin/python3
 import asyncio
-import os
+from typing import IO
+from functools import wraps
+import os, sys
 import tkinter as tk
 import async_tkinter as atk
 import math
@@ -8,6 +10,20 @@ from enum import Enum
 import struct
 
 PATH = "/tmp/philo_visualizer.pipe"
+
+@wraps(open)
+async def async_open(*args, **kwds):
+	opener = kwds.pop("opener") if "opener" in kwds else os.open
+	kwds["opener"] = lambda path, flags: opener(path, flags | os.O_NONBLOCK)
+	while True:
+		try:
+			fd = open(*args, **kwds)
+			break
+		except OSError as e:
+			if e.errno != 6:
+				raise
+		await asyncio.sleep(0)
+	return fd
 
 def calc_pos_and_angle(width, height, n, p):
 	x = width/2*(1+n*math.sin(2*math.pi*p))
@@ -65,11 +81,14 @@ class PhiloVisualizer(atk.AsyncTk):
 			self.width, self.height, 0.9 if istake else 0.8, fork_pos/self.len)
 		self.canvas.coords(self.fork[fork], x, y)
 		self.canvas.itemconfig(self.fork[fork],angle=angle)
-	async def start(self, reader:asyncio.StreamReader):
+	async def start(self, reader:IO):
 		while self.running:
 			try:
-				data = await reader.readexactly(8)
-			except asyncio.IncompleteReadError:
+				data = b''
+				while len(data) < 8:
+					data += reader.read(8 - len(data))
+					await asyncio.sleep(0)
+			except ValueError:
 				break
 			philo, action = struct.unpack("II", data)
 			if action & 0b1000:
@@ -95,28 +114,15 @@ class PhiloVisualizer(atk.AsyncTk):
 			# await asyncio.sleep(0.01)
 
 async def main(path):
-	if os.path.exists(path):
-		os.unlink(path)
-	os.mkfifo(path)
+	if not os.access(PATH, os.F_OK):
+		os.mkfifo(PATH)
+	await asyncio.create_subprocess_exec(*sys.argv[1:])
 	app = PhiloVisualizer()
-	task_app = asyncio.create_task(app.async_mainloop())
-	async def recive():
-		loop = asyncio.get_running_loop()
-		try:
-			while True:
-				with await loop.run_in_executor(None, lambda: open(path, mode="rb", buffering=0)) as fd:
-					reader = asyncio.StreamReader()
-					protocol = asyncio.StreamReaderProtocol(reader)
-					await loop.connect_read_pipe(lambda: protocol, fd)
-					await app.start(reader)
-		except asyncio.CancelledError:
-			pass
-	task = asyncio.create_task(recive())
-	await task_app
-	task.cancel()
-	await task
+	with await async_open(path, "rb") as reader:
+		task = asyncio.create_task(app.start(reader))
+		await app.async_mainloop()
+		task.cancel()
 
 if __name__ == "__main__":
 	asyncio.run(main(PATH))
-	#なぜか終了しないので
-	os._exit(0)
+	

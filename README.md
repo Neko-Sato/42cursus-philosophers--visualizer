@@ -28,10 +28,9 @@ philovisualizer_init([哲学者とフォークの数], [ボーナスかどうか
 philovisualizer_send([哲学者の番号], [上のいずれか])
 ```
 
-バックグラウンドで実行してから実行します
+このように実行してください
 ```
-./philo_visualizer.py &
-./philo ...
+./philo_visualizer.py ./philo ...
 ```
 
 thnkingが黒、eating,が緑、sleepingが青、deiedが赤で表示されます
