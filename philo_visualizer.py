@@ -11,33 +11,6 @@ import struct
 
 PATH = "/tmp/philo_visualizer.pipe"
 
-@wraps(open)
-async def async_open(*args, **kwds):
-	opener = kwds.pop("opener") if "opener" in kwds else os.open
-	kwds["opener"] = lambda path, flags: opener(path, flags | os.O_NONBLOCK)
-	while True:
-		try:
-			fd = open(*args, **kwds)
-			break
-		except OSError as e:
-			if e.errno != 6:
-				raise
-		await asyncio.sleep(0)
-	return fd
-
-async def async_read_bytes(fd:IO, n:int):
-	try:
-		data = b''
-		while n < 0 or len(data) < n:
-			chank = fd.read(-1 if n < 0 else n - len(data))
-			if chank:
-				data += chank
-			await asyncio.sleep(0)
-	except ValueError:
-		if not n < 0:
-			return None
-	return data
-
 def calc_pos_and_angle(width, height, n, p):
 	x = width/2*(1+n*math.sin(2*math.pi*p))
 	y = height/2*(1-n*math.cos(2*math.pi*p))
@@ -94,10 +67,11 @@ class PhiloVisualizer(atk.AsyncTk):
 			self.width, self.height, 0.9 if istake else 0.8, fork_pos/self.len)
 		self.canvas.coords(self.fork[fork], x, y)
 		self.canvas.itemconfig(self.fork[fork],angle=angle)
-	async def start(self, reader:IO):
+	async def start(self, reader:asyncio.StreamReader):
 		while self.running:
-			data = await async_read_bytes(reader, 8)
-			if not data:
+			try:
+				data = await reader.readexactly(8)
+			except asyncio.IncompleteReadError:
 				break
 			philo, action = struct.unpack("II", data)
 			if action & 0b1000:
@@ -125,12 +99,18 @@ class PhiloVisualizer(atk.AsyncTk):
 async def main(path):
 	if not os.access(PATH, os.F_OK):
 		os.mkfifo(PATH)
-	await asyncio.create_subprocess_exec(*sys.argv[1:])
 	app = PhiloVisualizer()
-	with await async_open(path, "rb", buffering=0) as reader:
-		task = asyncio.create_task(app.start(reader))
-		await app.async_mainloop()
-		task.cancel()
+	loop = asyncio.get_running_loop()
+	await asyncio.create_subprocess_exec(*sys.argv[1:])
+	sync_reader = open(path, "rb", buffering=0)
+	reader = asyncio.StreamReader()
+	transport, _ = await loop.connect_read_pipe(
+		lambda: asyncio.StreamReaderProtocol(reader), sync_reader)
+	task = asyncio.create_task(app.start(reader))
+	await app.async_mainloop()
+	task.cancel()
+	transport.close()
+	sync_reader.close()
 
 if __name__ == "__main__":
 	asyncio.run(main(PATH))
