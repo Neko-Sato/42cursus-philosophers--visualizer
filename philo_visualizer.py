@@ -25,6 +25,19 @@ async def async_open(*args, **kwds):
 		await asyncio.sleep(0)
 	return fd
 
+async def async_read_bytes(fd:IO, n:int):
+	try:
+		data = b''
+		while n < 0 or len(data) < n:
+			chank = fd.read(-1 if n < 0 else n - len(data))
+			if chank:
+				data += chank
+			await asyncio.sleep(0)
+	except ValueError:
+		if not n < 0:
+			return None
+	return data
+
 def calc_pos_and_angle(width, height, n, p):
 	x = width/2*(1+n*math.sin(2*math.pi*p))
 	y = height/2*(1-n*math.cos(2*math.pi*p))
@@ -83,12 +96,8 @@ class PhiloVisualizer(atk.AsyncTk):
 		self.canvas.itemconfig(self.fork[fork],angle=angle)
 	async def start(self, reader:IO):
 		while self.running:
-			try:
-				data = b''
-				while len(data) < 8:
-					data += reader.read(8 - len(data))
-					await asyncio.sleep(0)
-			except ValueError:
+			data = await async_read_bytes(reader, 8)
+			if not data:
 				break
 			philo, action = struct.unpack("II", data)
 			if action & 0b1000:
