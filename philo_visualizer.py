@@ -1,7 +1,6 @@
 #!/usr/bin/python3
+import argparse
 import asyncio
-from typing import IO
-from functools import wraps
 import os, sys
 import tkinter as tk
 import async_tkinter as atk
@@ -96,13 +95,13 @@ class PhiloVisualizer(atk.AsyncTk):
 				self.change_forkstate(philo, False, 1)
 			# await asyncio.sleep(0.01)
 
-async def main(path):
-	if not os.access(PATH, os.F_OK):
-		os.mkfifo(PATH)
-	app = PhiloVisualizer()
+async def main(args:argparse.Namespace):
+	if not os.access(args.pipe, os.F_OK):
+		os.mkfifo(args.pipe)
+	app = PhiloVisualizer(width=args.width, height=args.height)
 	loop = asyncio.get_running_loop()
-	await asyncio.create_subprocess_exec(*sys.argv[1:])
-	sync_reader = open(path, "rb", buffering=0)
+	await asyncio.create_subprocess_exec(*args.philo_argv)
+	sync_reader = open(args.pipe, "rb", buffering=0)
 	reader = asyncio.StreamReader()
 	transport, _ = await loop.connect_read_pipe(
 		lambda: asyncio.StreamReaderProtocol(reader), sync_reader)
@@ -113,5 +112,9 @@ async def main(path):
 	sync_reader.close()
 
 if __name__ == "__main__":
-	asyncio.run(main(PATH))
-	
+	parser = argparse.ArgumentParser()
+	parser.add_argument("philo_argv", nargs="+", type=str)
+	parser.add_argument("--width", type=int, default=500)
+	parser.add_argument("--height", type=int, default=500)
+	parser.add_argument("--pipe", type=str, default=PATH)
+	asyncio.run(main(parser.parse_args()))
